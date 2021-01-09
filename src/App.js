@@ -46,7 +46,7 @@ class App extends React.Component {
   handleMarkingAll = (e) => {
     // if the mark all checkbox is checked then unmark all the checkboxes, and 
     // if the mark all checkbox is unchecked then mark all the checkboxes.
-    const checkState = this.state.markedItemCount === this.state.itemList.length;
+    const checkState = this.state.markedItemCount === this.state.itemList.length - this.state.deletedItemCount;
     const itemList = this.state.itemList.map(item => {
       item.marked = checkState === true ? false : true;
       return item;
@@ -54,7 +54,6 @@ class App extends React.Component {
     // count the delete items so that they are not counted in marked and unmarked.
     const deletedItemCount = itemList.filter(item => item.deleted).length;
     const markedItemCount = itemList.filter(item => item.marked && !item.deleted).length;
-    console.log(markedItemCount);
     const unmarkedItemCount = itemList.length - markedItemCount - deletedItemCount;
     this.setState({ itemList, markedItemCount, unmarkedItemCount, deletedItemCount });
   }
@@ -71,7 +70,8 @@ class App extends React.Component {
 
     this.setState({
       itemList,
-      markedItemCount: this.state.markedItemCount - 1
+      markedItemCount: this.state.markedItemCount - 1,
+      deletedItemCount: this.state.deletedItemCount - 1,
     });
 
   }
@@ -80,7 +80,7 @@ class App extends React.Component {
     // handle delete of all items that are marked.
     let markedDeleteCount = 0;
     const itemList = this.state.itemList.map(item => {
-      if (item.marked) {
+      if (item.marked && !item.deleted) {
         markedDeleteCount++;
         item.deleted = true;
       }
@@ -88,7 +88,8 @@ class App extends React.Component {
     });
     this.setState({
       itemList,
-      markedItemCount: this.state.markedItemCount - markedDeleteCount, deletedItemCount: this.state.deletedItemCount + 1
+      markedItemCount: this.state.markedItemCount - markedDeleteCount,
+      deletedItemCount: this.state.deletedItemCount + markedDeleteCount
     });
   }
 
@@ -154,17 +155,18 @@ class App extends React.Component {
 
 
   render() {
-    const { textValue, searchValue, filteredList, unmarkedItemCount, markedItemCount, itemList } = this.state;
+    const { textValue, searchValue, filteredList, unmarkedItemCount, markedItemCount, itemList, deletedItemCount } =
+      this.state;
     return (
       <Fragment>
         <div className="todoapp">
           <h1 className="heading">TODOS</h1>
           <input id="new-todo" type="text" value={textValue} onKeyPress={this.handleKeyPress} onChange={this.handleTextChange} placeholder="What needs to be done?" />
-          {(unmarkedItemCount !== 0 || markedItemCount !== 0) &&
+          {(unmarkedItemCount > 0 || markedItemCount > 0) &&
             (
               <Fragment>
                 <input id="toggle-all" type="checkbox"
-                  checked={markedItemCount === itemList.length}
+                  checked={markedItemCount === itemList.length - deletedItemCount}
                   onChange={this.handleMarkingAll} />
                 <label htmlFor="toggle-all" >Mark all as complete</label>
                 <input id="search-todo" type="text" value={searchValue} onChange={this.handleSearch} placeholder="What you want to search?" />
